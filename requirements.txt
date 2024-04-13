@@ -1,5 +1,6 @@
-scikit-learn
-streamlit
-joblib
-numpy
+streamlit-nightly
 pandas
+joblib
+pydeck
+scikit-learn
+plotly
