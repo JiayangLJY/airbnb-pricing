@@ -1,6 +1,5 @@
 streamlit-nightly
+numpy
 pandas
 joblib
-pydeck
-scikit-learn
-plotly
+scikit-learn==1.3.0

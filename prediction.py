@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import joblib
+from joblib import load
 
 ############ Const & Config ############
 MODEL_PATH = './model/model.joblib'
@@ -22,7 +22,7 @@ st.sidebar.markdown("Predict you ideal Airbnb rental price using our regression 
 # load the trained model
 @st.cache_resource
 def load_model():
-    return joblib.load(MODEL_PATH)
+    return load(MODEL_PATH)
 
 # load default user input (as a DataFrame)
 @st.cache_data
