@@ -1,6 +1,10 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+from joblib import load
+import plotly.express as px
+import geopandas as gpd
+
 
 ############ Const & Config ############
 DATA_PATH = './data/listing_primary.csv'
@@ -66,7 +70,7 @@ if st.button("View DataFrame", type='primary', key='expd_df'):
 
 # view price by neighborhood
 st.markdown("### Price by Area")
-st.markdown("Will rental price significantly varies between area? Explore the average/median price in distinct neighbourhood!")
+st.markdown("Will rental price significantly varies between area? Explore the data in different neighbourhoods!")
 
 area = st.selectbox("Neighbourhood:", NBR)
 
@@ -79,10 +83,7 @@ area_col3.metric('Median Price', f'${num_formatter(area_res["median"])}')
 
 st.divider()
 
-
-############ Data distribution ############
-st.markdown("## Data Distribution")
-st.markdown("Interested in the data distribution? You can view the distribution of the numeric features in our dataset be selecting the feature in the selectbox below!")
+st.markdown("Also, you can view the distribution of the numeric features in our dataset be selecting the feature in the box below!")
 
 target = st.selectbox(
     "Select feature:",
@@ -92,11 +93,10 @@ target = st.selectbox(
 if target:
     st.bar_chart(data_dis(df, target), x=target, y='count')
 
-st.divider()
-
+# st.divider()
 
 ############ Relations to price ############
-st.markdown("## Relation Exploration")
+st.markdown("## Correlation Exploration")
 st.markdown("Want to explore the relation between single feature and price? You can try it by selecting the feature you want to explore!")
 
 feature = st.selectbox(
@@ -106,4 +106,55 @@ feature = st.selectbox(
 
 st.scatter_chart(sinlge_rel(feature), x=feature, y='price')
 
-st.divider()
+# st.divider()
+
+############ Data distribution ############
+st.markdown("## Data Distribution")
+st.markdown("Interested in the data distribution? You can hover around the cursor to see the Average Price of Airbnb and Crime Situation in different neighborhoods!")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("Average Airbnb Prices by Neighborhood in Seattle")
+
+    # Load the Seattle GeoJSON into a GeoDataFrame 
+    gdf = gpd.read_file('./data/listing_geo.geojson')
+    # Convert the GeoDataFrame to a JSON format that Plotly can understand
+    geojson = gdf.__geo_interface__
+    
+    # Create the choropleth map using Plotly Express
+    fig = px.choropleth_mapbox(gdf, geojson=geojson, 
+                           locations=gdf.index, color="price",
+                           hover_name="neighborhood", 
+                           hover_data={"price": True}, 
+                           mapbox_style="carto-positron", 
+                           center={"lat": gdf.geometry.centroid.y.mean(), "lon": gdf.geometry.centroid.x.mean()},
+                           zoom=10,
+                           labels={"price": "Average Price ($)"}
+                          )
+    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, title="Average Airbnb Prices by Neighborhood in Seattle")
+    # Display the figure in Streamlit
+    st.plotly_chart(fig, use_container_width=True)
+
+with col2: 
+    st.subheader("Total Crime (2008-2024) by Neighborhood in Seattle")
+
+    # Load the Seattle GeoJSON into a GeoDataFrame
+    gdf_crime = gpd.read_file('./data/crime_geo.geojson')
+    
+    # Convert the GeoDataFrame to a JSON format that Plotly can understand
+    geojson = gdf_crime.__geo_interface__
+    # Create the choropleth map using Plotly Express
+    fig = px.choropleth_mapbox(gdf_crime, geojson=geojson, 
+                           locations=gdf.index, color="Total crime",
+                           hover_name="neighborhood", 
+                           hover_data={"Total crime": True}, 
+                           mapbox_style="carto-positron", 
+                           center={"lat": gdf_crime.geometry.centroid.y.mean(), "lon": gdf_crime.geometry.centroid.x.mean()},
+                           zoom=10,
+                           labels={"Total crime": "Total Crime Amount"}
+                          )
+    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, title="Crime Amount (2008-2024) by Neighborhood in Seattle")
+    
+    # Display the figure in Streamlit
+    st.plotly_chart(fig, use_container_width=True)
